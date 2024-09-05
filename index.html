@@ -7,13 +7,14 @@
   <style>
     body {
       background-color: black;
+      overflow: hidden; /* Hides scrollbar for entire page */
     }
 
     .container {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      min-height: 100vh; /* Maintain functionality for some devices */
     }
 
     #iframe-container {
@@ -27,8 +28,6 @@
       justify-content: center;
       align-items: center;
       z-index: 1000;
-      /* Added overflow: hidden to remove scrollbar */
-      overflow: hidden;
     }
 
     #iframe {
@@ -76,9 +75,6 @@
     </div>
   </div>
 
-  <div class="image-container" data-url="">
-    <img src="..." alt="Clickable Image" onclick="openIframe()">
-  </div>
   <div id="iframe-container">
     <iframe id="iframe" src=""></iframe>
     <div id="close-container">
@@ -110,7 +106,7 @@
     });
 
     function openIframe() {
-      document.getElementById('iframe-container').style.display = 'flex';
+      // This function is no longer needed since the image has been removed.
     }
 
     function closeIframe() {
