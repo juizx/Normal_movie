@@ -1,118 +1,539 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Movie Link Opener</title>
-  <style>
-    body {
-      background-color: black;
-      overflow: hidden; /* Hides scrollbar for entire page */
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Movie Search</title>
+    <style>
+        body {
+            font-family: "Arial", sans-serif;
+            background: #000000;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            position: relative;
+            overflow: auto; 
+        }
 
-    .container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh; /* Maintain functionality for some devices */
-    }
+        h1 {
+            margin: 0;
+            margin-bottom: 20px;
+            color: #ff4081;
+            font-size: 3em;
+            position: relative; 
+            z-index: 10; 
+        }
 
-    #iframe-container {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
+        .search-container {
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+            z-index: 10; 
+        }
 
-    #iframe {
-      margin: 0; /* Reset default margins */
-      border: none;
-      width: 100%;
-      height: 100%; /* Adjust height as needed */
-    }
+        input {
+            padding: 15px;
+            border: 2px solid #ff8c00;
+            border-radius: 30px;
+            width: 100%;
+            font-size: 1.2em;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            text-align: center;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, width 0.3s ease;
+        }
 
-    #close-container {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: white;
-      padding: 5px;
-      border-radius: 3px;
-    }
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+            transition: opacity 0.3s ease;
+        }
 
-    #close-button {
-      cursor: pointer;
-      font-weight: bold;
-    }
+        input:focus {
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-color: #ff4081;
+            box-shadow: 0 0 15px rgba(255, 64, 129, 0.5), 0 0 10px rgba(0, 0, 0, 0.5);
+            transform: scale(1.05);
+        }
 
-    .button {
-      background-color: #007BFF; /* Blue */
-      color: #FFFFFF; /* White */
-      border: 2px solid #FFFFFF; /* White border */
-      border-radius: 10px; /* Rounded corners */
-      padding: 10px 20px; /* Padding */
-    }
+        input:focus::placeholder {
+            opacity: 0.5;
+        }
 
-    .input-box {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 0 auto; /* Center horizontally */
-    }
-  </style>
+        input:hover {
+            border-color: #ff2366;
+        }
+
+        .results {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 20px;
+            max-height: 500vh;
+            overflow-y: hidden;
+            opacity: 0;
+            transition: opacity 0.6s ease-in-out;
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            visibility: hidden;
+        }
+
+        .item {
+            width: 245px;
+            height: 345px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .item:hover {
+            transform: scale(1.05) rotate(2deg);
+        }
+
+        .item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .item:hover img {
+            transform: scale(1.05);
+        }
+
+        .play-button {
+            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #ff4081;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .play-button:hover {
+            background-color: #ff2366;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+        }
+
+        .iframe-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.9);
+            transition: opacity 0.5s ease;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 15px;
+            background: none;
+            border: none;
+            color: #ff8c00;
+            font-size: 3em;
+            cursor: pointer;
+            z-index: 10000;
+            transition: color 0.3s;
+        }
+
+        .back-button:hover {
+            color: #ff4081;
+        }
+
+        @media (max-width: 768px) {
+            .item {
+                width: 100%;
+            }
+        }
+
+        .bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center; 
+            background-repeat: no-repeat; 
+            opacity: 0.6;
+            display: none; 
+            z-index: 0; 
+            transition: opacity 0.3s ease; 
+        }
+
+        .dropdown {
+            position: absolute;
+            top: 40px;
+            right: -200px;
+            z-index: 10000;
+            background-color: #ff8c00;
+            color: #ffffff;
+                      border: 2px solid #ff8c00;
+            padding: 5px;
+            width: 300px; /* Adjust for longer server names */
+        }
+
+        optgroup {
+          text-align: center;
+            font-weight: bold;
+            background: #ff8c00; 
+            color: #ffffff;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="input-box">
-      <input type="text" id="movie-id" class="input-field" placeholder="Enter Movie ID">
-      <button id="open-button" class="button">Open Movie</button>
+    <div class="bg-overlay" id="bg-overlay"></div>
+    <h1>Movie Search</h1>
+    <div class="search-container">
+        <input type="text" id="search" placeholder="Search for a movie..." />
     </div>
-  </div>
+    <div class="results" id="results"></div>
 
-  <div id="iframe-container">
-    <iframe id="iframe" src=""></iframe>
-    <div id="close-container">
-      <div id="close-button" onclick="closeIframe()">X</div>
+    <div class="iframe-container" id="iframe-container">
+        <button class="back-button" onclick="closeFullscreen()">X</button>
+        <div class="dropdown">
+            <select id="server-select" onchange="changeServer()">
+                <option value="" disabled selected>Select Server</option>
+
+                <optgroup label="Portuguese">
+                    <option value="https://superflixapi.dev/filme/{imdb}">Server 1</option>
+                    <option value="https://embedder.net/e/movie?imdb={imdb}">Server 2</option>
+                    <option value="https://embed.warezcdn.com/filme/{imdb}">Server 3</option>
+                </optgroup>
+
+                <optgroup label="Russian">
+                    <option value="https://api.insertunit.ws/embed/imdb/{imdb}">Server 1</option>
+                </optgroup>
+
+                <optgroup label="Spanish">
+                    <option value="https://kllamrd.org/video/{imdb}">Server 1</option>
+                </optgroup>
+
+                <optgroup label="English">
+                    <option value="https://vidsrc.vip/embed/movie/{imdb}">Server 1</option>
+                    <option value="https://vidsrc.net/embed/movie?imdb={imdb}">Server 2</option>
+                    <option value="https://flixcloud.co/embed/movie?id={imdb}">Server 3</option>
+                    <option value="https://player.smashy.stream/movie/{imdb}">Server 4</option>
+                    <option value="https://playsrc.streamscripts.xyz/embed/movie/{imdb}">Server 5</option>
+                    <option value="https://www.NontonGo.win/embed/movie/{imdb}">Server 6</option>
+                    <option value="https://gomo.to/movie/{imdb}">Server 7</option>
+                    <option value="https://anyembed.xyz/movie/{imdb}">Server 8</option>
+                    <option value="https://www.primewire.tf/embed/movie?imdb={imdb}">Server 9</option>
+                    <option value="https://vidsrc.me/embed/movie?imdb={imdb}">Server 10</option>
+                    <option value="https://godriveplayer.com/player.php?imdb={imdb}">Server 11</option>
+                    <option value="https://vidsrc.top/embed/movie/imdb/{imdb}">Server 12</option>
+                    <option value="https://vidsrc.uk/embed/movie/{imdb}">Server 13</option>
+                    <option value="https://autoembed.co/movie/imdb/{imdb}">Server 14</option>
+                    <option value="https://www.2embed.stream/embed/movie/{imdb}">Server 15</option>
+                    <option value="https://moviehab.to/embed/movie?imdb={imdb}">Server 16</option>
+                    <option value="https://filmku.stream/embed/movie?imdb={imdb}">Server 17</option>
+                    <option value="https://play2.123embed.net/movie/{imdb}">Server 18</option>
+                    <option value="https://mostream.us/embed.php?imdb={imdb}">Server 19</option>
+                    <option value="https://vidlink.pro/movie/{imdb}">Server 20</option>
+                    <option value="https://player.vidsrc.nl/embed/movie/{imdb}">Server 21</option>
+                    <option value="https://mp.wplay.me/movie/player/{imdb}">Server 22</option>
+                    <option value="https://embed.su/embed/movie/{imdb}">Server 23</option>
+                    <option value="https://embedlinks.top/api/vidsrc/movieslist.php?id={imdb}">Server 24</option>
+                    <option value="https://ply4.com/movie/?id={imdb}">Server 25</option>
+                </optgroup>
+
+                <optgroup label="French">
+                    <option value="https://frembed.pro/api/film.php?id={imdb}">Server 1</option>
+                </optgroup>
+
+                <optgroup label="Hindi">
+                    <option value="https://vigorto302aed.com/play/{imdb}">Server 1</option>
+                    <option value="https://v1.sdsp.xyz/embed/movie/{imdb}">Server 2</option>
+                </optgroup>
+
+                <optgroup label="No Clock">
+                    <option value="https://fmovies247.net/embed/movie/{imdb}">Server 1</option>
+                </optgroup>
+
+                <optgroup label="Glitch">
+                    <option value="https://vidsrc.pro/embed/movie/{imdb}">Server 1</option>
+                    <option value="https://moviesapi.club/movie/{imdb}">Server 2</option>
+                    <option value="https://hnembed.cc/embed/movie/{imdb}">Server 3</option>
+                </optgroup>
+
+                <optgroup label="Extra">
+                    <option value="https://filmku.stream/embed/{imdb}">Server 1</option>
+                    <option value="https://klakit.net/embed/{imdb}">Server 2</option>
+                    <option value="https://watchin.live/embed/movie?imdb={imdb}">Server 3</option>
+                </optgroup>
+
+                <optgroup label="TMDB">
+                    <option value="https://vidsrc.rip/embed/movie/{imdb}">Server 1</option>
+                    <option value="https://vidsrc.icu/embed/movie/{imdb}">Server 2</option>
+                    <option value="https://moviee.tv/embed/movie/{imdb}">Server 3</option>
+                    <option value="https://embed.digi-shala.in/embed/movie?tmdb={imdb}">Server 4</option>
+                    <option value="https://slidemovies.org/content/movie/play/{imdb}">Server 5</option>
+                    <option value="https://vidsrc.win/movie.html?id={imdb}">Server 6</option>
+                    <option value="https://asia.heroku.uk/embed/movie/{imdb}">Server 7</option>
+                </optgroup>
+
+                <optgroup label="Multi Server 1">
+                    <option value="https://vidsrc.me/embed/movie?imdb={imdb}">Server 1</option>
+                    <option value="https://vidsrc.in/embed/movie?imdb={imdb}">Server 2</option>
+                    <option value="https://vidsrc.pm/embed/movie?imdb={imdb}">Server 3</option>
+                    <option value="https://vidsrc.net/embed/movie?imdb={imdb}">Server 4</option>
+                    <option value="https://vidsrc.xyz/embed/movie?imdb={imdb}">Server 5</option>
+                    <option value="https://vidsrc.io/embed/movie?imdb={imdb}">Server 6</option>
+                </optgroup>
+
+                <optgroup label="Multi Server 2">
+                    <option value="https://www.2embed.cc/embed/{imdb}">Server 1</option>
+                    <option value="https://www.2embed.skin/embed/{imdb}">Server 2</option>
+                </optgroup>
+
+                <optgroup label="Multi Server 3">
+                    <option value="https://www.rgshows.me/player/movies/api1/index.html?id={imdb}">Server 1</option>
+                    <option value="https://www.rgshows.me/player/movies/api2/index.html?id={imdb}">Server 2</option>
+                    <option value="https://www.rgshows.me/player/movies/api3/index.html?id={imdb}">Server 3</option>
+                    <option value="https://www.rgshows.me/player/movies/api4/index.html?id={imdb}">Server 4</option>
+                    <option value="https://www.rgshows.me/player/movies/api5/index.html?id={imdb}">Server 5</option>
+                    <option value="https://www.rgshows.me/player/movies/api6/index.html?id={imdb}">Server 6</option>
+                    <option value="https://www.rgshows.me/player/movies/api7/index.html?id={imdb}">Server 7</option>
+                    <option value="https://www.rgshows.me/player/movies/api8/index.html?id={imdb}">Server 8</option>
+                </optgroup>
+
+                <optgroup label="Multi Server 4">
+                    <option value="https://player.autoembed.cc/{imdb}">Server 1</option>
+                    <option value="https://autoembed.cc/embed/player.php?id={imdb}">Server 2</option>
+                </optgroup>
+
+                <optgroup label="Multi Server 5">
+                    <option value="https://vidsrc.cc/v2/embed/movie/{imdb}">Server 1</option>
+                    <option value="https://vidsrc.cc/v3/embed/movie/{imdb}">Server 2</option>
+                </optgroup>
+
+                <optgroup label="Multi Server 6">
+                    <option value="https://ythd.org/embed/movie/{imdb}">Server 1</option>
+                    <option value="https://hdfmovies.com/embed/movie/{imdb}">Server 2</option>
+                    <option value="https://vidsrcme.vidsrc.icu/embed/movie?tmdb={imdb}">Server 3</option>
+                    <option value="https://watch.viewvault.org/embed/{imdb}">Server 4</option>
+                </optgroup>
+
+                <optgroup label="Multi Server 7">
+                    <option value="https://vidsrc.dev/embed/movie/{imdb}">Server 1</option>
+                    <option value="https://multiembed.mov/directstream.php?video_id={imdb}">Server 2</option>
+                </optgroup>
+
+                <optgroup label="Multi Server 8">
+                    <option value="https://multiembed.mov/?video_id={imdb}">Server 1</option>
+                    <option value="https://123videos.4u.ms/?imdb_id={imdb}&server=multi2">Server 2</option>
+                </optgroup>
+
+                <optgroup label="Multi Server 9">
+                    <option value="https://filmclub.tv/netu/player.php?tmdb={imdb}">Server 1</option>
+                    <option value="https://filmclub.tv/netu/playervip.php?imdb={imdb}">Server 2</option>
+                </optgroup>
+
+                <optgroup label="Multi Movie 1">
+                    <option value="https://api.autoembed.online/embed/{imdb}">Server 1</option>
+                    <option value="https://api-v1.autoembed.online/embed/movie/{imdb}">Server 2</option>
+                    <option value="https://api-v2.autoembed.online/embed/movie/{imdb}">Server 3</option>
+                    <option value="https://api-v3.autoembed.online/embed/movie/{imdb}">Server 4</option>
+                    <option value="https://api-v4.autoembed.online/embed/movie/{imdb}">Server 5</option>
+                    <option value="https://api-v5.autoembed.online/embed/movie/{imdb}">Server 6</option>
+                </optgroup>
+
+                <optgroup label="Multi Movie 2">
+                    <option value="https://api.vidsrc.online/embed/{imdb}">Server 1</option>
+                    <option value="https://api-v1.vidsrc.online/embed/{imdb}">Server 2</option>
+                    <option value="https://api-v2.vidsrc.online/embed/{imdb}">Server 3</option>
+                    <option value="https://api-v3.vidsrc.online/embed/{imdb}">Server 4</option>
+                    <option value="https://api-v4.vidsrc.online/embed/{imdb}">Server 5</option>
+                    <option value="https://api-v5.vidsrc.online/embed/{imdb}">Server 6</option>
+                </optgroup>
+
+                <optgroup label="Multi Movie 3">
+                    <option value="https://api.vidsrc.host/embed/{imdb}">Server 1</option>
+                    <option value="https://api-v1.vidsrc.host/embed/{imdb}">Server 2</option>
+                    <option value="https://api-v2.vidsrc.host/embed/{imdb}">Server 3</option>
+                    <option value="https://api-v3.vidsrc.host/embed/{imdb}">Server 4</option>
+                    <option value="https://api-v4.vidsrc.host/embed/{imdb}">Server 5</option>
+                    <option value="https://api-v5.vidsrc.host/embed/{imdb}">Server 6</option>
+                </optgroup>
+
+                <optgroup label="Multi Movie 4">
+                    <option value="https://api.vidsrc.biz.id/embed/{imdb}">Server 1</option>
+                    <option value="https://api-v1.vidsrc.biz.id/embed/{imdb}">Server 2</option>
+                    <option value="https://api-v2.vidsrc.biz.id/embed/{imdb}">Server 3</option>
+                    <option value="https://api-v3.vidsrc.biz.id/embed/{imdb}">Server 4</option>
+                    <option value="https://api-v4.vidsrc.biz.id/embed/{imdb}">Server 5</option>
+                    <option value="https://api-v5.vidsrc.biz.id/embed/{imdb}">Server 6</option>
+                </optgroup>
+
+                <optgroup label="Multi Movie 5">
+                    <option value="https://api.vidsrc.pw/embed/{imdb}">Server 1</option>
+                    <option value="https://api-v1.vidsrc.pw/embed/{imdb}">Server 2</option>
+                    <option value="https://api-v2.vidsrc.pw/embed/{imdb}">Server 3</option>
+                    <option value="https://api-v3.vidsrc.pw/embed/{imdb}">Server 4</option>
+                    <option value="https://api-v4.vidsrc.pw/embed/{imdb}">Server 5</option>
+                    <option value="https://api-v5.vidsrc.pw/embed/{imdb}">Server 6</option>
+                </optgroup>
+
+                <optgroup label="Multi Movie 6">
+                    <option value="https://api.autoembed.cloud/embed/{imdb}">Server 1</option>
+                    <option value="https://api-v1.autoembed.cloud/embed/{imdb}">Server 2</option>
+                    <option value="https://api-v2.autoembed.cloud/embed/{imdb}">Server 3</option>
+                    <option value="https://api-v3.autoembed.cloud/embed/{imdb}">Server 4</option>
+                    <option value="https://api-v4.autoembed.cloud/embed/{imdb}">Server 5</option>
+                    <option value="https://api-v5.autoembed.cloud/embed/{imdb}">Server 6</option>
+                </optgroup>
+
+                <optgroup label="Multi Movie 7">
+                    <option value="https://api.autoembed.pw/embed/{imdb}">Server 1</option>
+                    <option value="https://api-v1.autoembed.pw/embed/{imdb}">Server 2</option>
+                    <option value="https://api-v2.autoembed.pw/embed/{imdb}">Server 3</option>
+                    <option value="https://api-v3.autoembed.pw/embed/{imdb}">Server 4</option>
+                    <option value="https://api-v4.autoembed.pw/embed/{imdb}">Server 5</option>
+                    <option value="https://api-v5.autoembed.pw/embed/{imdb}">Server 6</option>
+                </optgroup>
+
+                <optgroup label="Multi Movie 8">
+                    <option value="https://api.autoembed.host/embed/movie/{imdb}">Server 1</option>
+                    <option value="https://api-v1.autoembed.host/embed/movie/{imdb}">Server 2</option>
+                    <option value="https://api-v2.autoembed.host/embed/movie/{imdb}">Server 3</option>
+                    <option value="https://api-v3.autoembed.host/embed/movie/{imdb}">Server 4</option>
+                    <option value="https://api-v4.autoembed.host/embed/movie/{imdb}">Server 5</option>
+                    <option value="https://api-v5.autoembed.host/embed/movie/{imdb}">Server 6</option>
+                </optgroup>
+            </select>
+        </div>
+        <iframe id="video-iframe" src="" allowfullscreen></iframe>
     </div>
-  </div>
 
-  <script>
-    const openButton = document.getElementById('open-button');
-    const movieIdInput = document.getElementById('movie-id');
+    <script>
+        const apiKey = "d13abf16ac8e223ca6b73612cc10878d";
+        let currentMovieId;
 
-    openButton.addEventListener('click', function() {
-      const movieId = movieIdInput.value.trim();
+        async function fetchTrendingMovies() {
+            const url = `https://api.themoviedb.org/3/trending/movie/week?api_key=${apiKey}&language=en-US`;
+            const response = await fetch(url);
+            const data = await response.json();
+            displayResults(data.results);
+        }
 
-      if (movieId.length === 0) {
-        alert('Please enter a valid Movie ID.');
-        return;
-      }
+        document.addEventListener("DOMContentLoaded", function () {
+            fetchTrendingMovies();
+        });
 
-      // Construct the movie URL using the entered Movie ID
-      const movieUrl = `https://moviesapi.club/movie/${movieId}`;
+        document.getElementById("search").addEventListener("input", function () {
+            searchMovies(this.value);
+        });
 
-      // Update iframe source and open overlay
-      document.getElementById('iframe').src = movieUrl;
-      document.getElementById('iframe-container').style.display = 'flex';
+        async function searchMovies(query) {
+            if (!query) {
+                fetchTrendingMovies();
+                return;
+            }
+    
+            const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            displayResults(data.results);
+        }
 
-      // Clear the input field
-      movieIdInput.value = '';
-    });
+        function displayResults(results) {
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = ""; 
 
-    function openIframe() {
-      // This function is no longer needed since the image has been removed.
-    }
+            const MIN_RATING = 6; 
+            const MIN_YEAR = 2010; 
+            let hasResults = false; 
 
-    function closeIframe() {
-      document.getElementById('iframe-container').style.display = 'none';
-      document.getElementById('iframe').src = ''; // Clear iframe source on close
-    }
-  </script>
+            results.forEach((item) => {
+                const releaseDate = new Date(item.release_date);
+                const releaseYear = releaseDate.getFullYear();
+                if (
+                    item.poster_path &&
+                    item.vote_average >= MIN_RATING &&
+                    releaseYear >= MIN_YEAR
+                ) {
+                    hasResults = true; 
+                    const itemDiv = document.createElement("div");
+                    itemDiv.className = "item";
+                    itemDiv.innerHTML = `
+                        <img src="https://image.tmdb.org/t/p/w500${item.poster_path}" 
+                             alt="${item.title}" 
+                             onerror="this.onerror=null; this.src='https://via.placeholder.com/200';" 
+                             onclick="playMovie(${item.id})">
+                    `;
+                    resultsDiv.appendChild(itemDiv);
+                }
+            });
+
+            if (hasResults) {
+                resultsDiv.style.visibility = "visible"; 
+                resultsDiv.style.opacity = 1; 
+            } else {
+                resultsDiv.style.visibility = "hidden"; 
+                resultsDiv.style.opacity = 0; 
+                resultsDiv.innerHTML = "<p>No highly rated movies found.</p>"; 
+            }
+        }
+
+        function playMovie(id) {
+            currentMovieId = id; 
+            const selectedServer = document.getElementById("server-select").value || "https://superflixapi.dev/filme/{imdb}";
+            const videoUrl = selectedServer.replace("{imdb}", id);
+            openFullscreenIframe(videoUrl);
+        }
+
+        function changeServer() {
+            if (currentMovieId) {
+                const selectedServer = document.getElementById("server-select").value || "https://superflixapi.dev/filme/{imdb}";
+                const videoUrl = selectedServer.replace("{imdb}", currentMovieId);
+                document.getElementById("video-iframe").src = videoUrl; 
+            }
+        }
+
+        function openFullscreenIframe(url) {
+            const iframeContainer = document.getElementById("iframe-container");
+            const videoIframe = document.getElementById("video-iframe");
+            videoIframe.src = url;
+            iframeContainer.style.display = "flex";
+            document.body.style.overflow = "hidden"; 
+        }
+
+        function closeFullscreen() {
+            const iframeContainer = document.getElementById("iframe-container");
+            const videoIframe = document.getElementById("video-iframe");
+            videoIframe.src = "";
+            iframeContainer.style.display = "none";
+            document.body.style.overflow = ""; 
+        }
+    </script>
 </body>
 </html>
